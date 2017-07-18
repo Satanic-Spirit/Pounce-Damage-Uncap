@@ -73,14 +73,14 @@ const char c_sPattern[] = "\xF3\x0F\x10\x1D\x2A\x2A\x2A\x2A\xF3\x0F\x59\xC0\xF3\
 #define  _MinRangeAddrOffset 4
 
 //comiss  xmm0, ds:fl_1000
-// 88 bytes from sig is this instruction.
+// 76 bytes from sig is this instruction.
 // address operand is 3 bytes into that instruction = 91 bytes.
-#define _MaxRangeAddrOffset 91
+#define _MaxRangeAddrOffset 79
 
 //mulss   xmm0, ds:fl_1_div_700
-// 123 bytes from the sig
+// 119 bytes from the sig
 // address operand is 4 bytes into that instruction = 127 bytes.
-#define _RangeScaleFactorAddrOffset 127
+#define _RangeScaleFactorAddrOffset 123
 
 #elif SH_SYS == SH_SYS_LINUX
 // This segment we search for is the start of the first instruction that loads 300.0f into memory. 
@@ -143,8 +143,11 @@ bool PounceDamageUncap::Load(PluginId id, ISmmAPI *ismm, char *error, size_t max
 {
 	PLUGIN_SAVEVARS();
 
-	GET_V_IFACE_ANY(GetServerFactory, server, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
-	GET_V_IFACE_ANY(GetEngineFactory, g_pCVar, ICvar, CVAR_INTERFACE_VERSION);
+	GET_V_IFACE_CURRENT(GetServerFactory, server, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
+	GET_V_IFACE_CURRENT(GetEngineFactory, g_pCVar, ICvar, CVAR_INTERFACE_VERSION);
+	
+	Msg("Pounce Damage Uncap: Found ServerGameDLL at %s\n", INTERFACEVERSION_SERVERGAMEDLL);
+	Msg("Pounce Damage Uncap: Found VEngineServer at %s\n", CVAR_INTERFACE_VERSION);
 
 	if(!PatchPounceVars(server))
 	{
@@ -163,13 +166,15 @@ bool PounceDamageUncap::Load(PluginId id, ISmmAPI *ismm, char *error, size_t max
 
 bool PatchPounceVars(void * pServerDll)
 {
+	
 	// Find the address of the start of our signature
 	char *pAddr = pPatchBaseAddr = (char*)g_MemUtils.FindLibPattern(pServerDll, c_sPattern, sizeof(c_sPattern)-1);
 	if(pAddr == NULL)
 	{
+		Msg("Pounce Damage Uncap: Pattern not found\n");
 		return false;
 	}
-	DevMsg("Found Pattern at %08x\n", pAddr);
+	Msg("Pounce Damage Uncap: Found Pattern at %08x\n", pAddr);
 
 	// Patch area length = last offset + (addr_length)
 #ifdef _NegativeMinRangeAddrOffset
@@ -180,7 +185,7 @@ bool PatchPounceVars(void * pServerDll)
 
 	if(!g_MemUtils.SetMemPatchable(pAddr, patchAreaLength))
 	{
-		Warning("Failed to set mem patchable\n");
+		Warning("Pounce Damage Uncap: Failed to set mem patchable\n");
 		return false;
 	}
 
@@ -191,17 +196,20 @@ bool PatchPounceVars(void * pServerDll)
 	g_pMinRangeData = *pPatchAddr;
 	g_flMinRange=*g_pMinRangeData;
 	*pPatchAddr=&g_flMinRange;
+	Msg("Pounce Damage Uncap: Min Range Patched\n");
 
 	// Patch max range address read
 	pPatchAddr = (float**)(pAddr + _MaxRangeAddrOffset);
 	g_pMaxRangeData = *pPatchAddr;
 	g_flMaxRange=*g_pMaxRangeData;
 	*pPatchAddr=&g_flMaxRange;
+	Msg("Pounce Damage Uncap: Max Range Patched\n");
 
 	pPatchAddr = (float**)(pAddr + _RangeScaleFactorAddrOffset);
 	g_pRangeScaleFactorData = *pPatchAddr;
 	g_fRangeScaleFactor=*g_pRangeScaleFactorData;
 	*pPatchAddr=&g_fRangeScaleFactor;
+	Msg("Pounce Damage Uncap: Range Scale Patched\n");
 
 #ifdef _NegativeMinRangeAddrOffset
 	// This patching should be linux only. Where -300.0 is precalculated, we have to replace that value.
@@ -270,7 +278,7 @@ const char *PounceDamageUncap::GetLicense()
 
 const char *PounceDamageUncap::GetVersion()
 {
-	return "1.1.0.0";
+	return "1.1.0.0-1";
 }
 
 const char *PounceDamageUncap::GetDate()
@@ -285,7 +293,7 @@ const char *PounceDamageUncap::GetLogTag()
 
 const char *PounceDamageUncap::GetAuthor()
 {
-	return "Michael \"ProdigySim\" Busby";
+	return "Michael \"ProdigySim\" Busby, $atanic $pirit";
 }
 
 const char *PounceDamageUncap::GetDescription()
@@ -300,7 +308,7 @@ const char *PounceDamageUncap::GetName()
 
 const char *PounceDamageUncap::GetURL()
 {
-	return "https://github.com/ProdigySim/Pounce-Damage-Uncap";
+	return "https://github.com/Satanic-Spirit/Pounce-Damage-Uncap";
 }
 
 bool PounceDamageUncap::RegisterConCommandBase(ConCommandBase *pVar)

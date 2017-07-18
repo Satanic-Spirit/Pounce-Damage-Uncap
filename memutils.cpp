@@ -31,7 +31,7 @@
 #include "memutils.h"
 #include <string.h>
 
-#if defined PLATFORM_LINUX
+#if SH_SYS == SH_SYS_LINUX
 #include <fcntl.h>
 #include <link.h>
 #include <sys/mman.h>
@@ -43,7 +43,7 @@
 #define PAGE_EXECUTE_READWRITE  PROT_READ|PROT_WRITE|PROT_EXEC
 #endif
 
-#if defined PLATFORM_APPLE
+#if SH_SYS == SH_SYS_APPLE
 #include <AvailabilityMacros.h>
 #include <mach/task.h>
 #include <mach-o/dyld_images.h>
@@ -67,7 +67,7 @@ MemoryUtils g_MemUtils;
 
 MemoryUtils::MemoryUtils()
 {
-#if defined PLATFORM_APPLE
+#if SH_SYS == SH_SYS_APPLE
 
 	Gestalt(gestaltSystemVersionMajor, &m_OSXMajor);
 	Gestalt(gestaltSystemVersionMinor, &m_OSXMinor);
@@ -94,7 +94,7 @@ MemoryUtils::MemoryUtils()
 
 MemoryUtils::~MemoryUtils()
 {
-#if defined PLATFORM_LINUX || defined PLATFORM_APPLE
+#if SH_SYS == SH_SYS_LINUX || SH_SYS == SH_SYS_LINUX
 	for (size_t i = 0; i < m_SymTables.size(); i++)
 	{
 		delete m_SymTables[i];
@@ -148,11 +148,11 @@ void *MemoryUtils::FindPattern(const void *start, const void *end, const char *p
 
 void *MemoryUtils::ResolveSymbol(void *handle, const char *symbol)
 {
-#if defined PLATFORM_WINDOWS
+#if SH_SYS == SH_SYS_WIN32
 
 	return GetProcAddress((HMODULE)handle, symbol);
 	
-#elif defined PLATFORM_LINUX
+#elif SH_SYS == SH_SYS_LINUX
 
 	struct link_map *dlmap;
 	struct stat dlstat;
@@ -286,7 +286,7 @@ void *MemoryUtils::ResolveSymbol(void *handle, const char *symbol)
 	munmap(file_hdr, dlstat.st_size);
 	return symbol_entry ? symbol_entry->address : NULL;
 
-#elif defined PLATFORM_APPLE
+#elif SH_SYS == SH_SYS_APPLE
 	
 	uintptr_t dlbase, linkedit_addr;
 	uint32_t image_count;
@@ -446,7 +446,7 @@ bool MemoryUtils::GetLibraryInfo(const void *libPtr, DynLibInfo &lib)
 		return false;
 	}
 
-#if defined PLATFORM_WINDOWS
+#if SH_SYS == SH_SYS_WIN32
 
 	MEMORY_BASIC_INFORMATION info;
 	IMAGE_DOS_HEADER *dos;
@@ -490,7 +490,7 @@ bool MemoryUtils::GetLibraryInfo(const void *libPtr, DynLibInfo &lib)
 	/* Finally, we can do this */
 	lib.memorySize = opt->SizeOfImage;
 
-#elif defined PLATFORM_LINUX
+#elif SH_SYS == SH_SYS_LINUX
 
 	Dl_info info;
 	Elf32_Ehdr *file;
@@ -559,7 +559,7 @@ bool MemoryUtils::GetLibraryInfo(const void *libPtr, DynLibInfo &lib)
 		}
 	}
 
-#elif defined PLATFORM_APPLE
+#elif SH_SYS == SH_SYS_APPLE
 
 	Dl_info info;
 	struct mach_header *file;

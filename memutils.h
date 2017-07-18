@@ -37,13 +37,13 @@
 #include "sourcehook.h"
 #include "sh_memory.h"
 
-#if defined PLATFORM_LINUX || defined PLATFORM_APPLE
+#if SH_SYS == SH_SYS_LINUX || SH_SYS == SH_SYS_APPLE
 #include <sh_vector.h>
 #include "sm_symtable.h"
 using SourceHook::CVector;
 #endif
 
-#if defined PLATFORM_APPLE
+#if SH_SYS == SH_SYS_APPLE
 #include <CoreServices/CoreServices.h>
 #endif
 
@@ -53,7 +53,7 @@ struct DynLibInfo
 	size_t memorySize;
 };
 
-#if defined PLATFORM_LINUX || defined PLATFORM_APPLE
+#if SH_SYS == SH_SYS_LINUX || SH_SYS == SH_SYS_APPLE
 struct LibSymbolTable
 {
 	SymbolTable table;
@@ -77,7 +77,7 @@ public:
 
 public:
 	bool GetLibraryInfo(const void *libPtr, DynLibInfo &lib);
-#if defined PLATFORM_LINUX || defined PLATFORM_APPLE
+#if SH_SYS == SH_SYS_LINUX || SH_SYS == SH_SYS_APPLE
 private:
 	CVector<LibSymbolTable *> m_SymTables;
 #if SH_SYS == SH_SYS_APPLE
